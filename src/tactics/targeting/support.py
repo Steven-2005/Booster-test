@@ -38,8 +38,11 @@ def support_target(
     side = 1.0 if player_id % 2 == 0 else -1.0
     lateral = config.strategy.support_lateral_m * side
     ball = context.known_ball
-    x = ball.x - config.strategy.support_depth_m
-    x = field.own_half_x(x, margin=0.35)
+    if abs(ball.x) < 0.1 and abs(ball.y) < 0.1:
+        x = -1.0
+    else:
+        x = (ball.x + field.opponent_goal_x()) / 2.0
+    # ---------------------------------------
     y = clamp(
         ball.y + lateral,
         -config.field_width / 2.0 + 0.45,

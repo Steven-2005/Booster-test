@@ -95,8 +95,21 @@ class ReadyStance:
         ball: BallState | None,
     ) -> Pose2D:
         """Goalkeeper guard formula; the default goalkeeper role calls this."""
-        keeper_x = self.field.own_goal_x() + self.config.goal_area_length + 0.50
-        keeper_y = clamp((ball.y * 0.38) if ball else 0.0, -1.35, 1.35)
+        base_keeper_x = self.field.own_goal_x() + self.config.goal_area_length + 0.20
+        
+        if ball:
+            # PENGATURAN DINAMIS: Kiper maju perlahan mengikuti posisi X bola untuk mempersempit sudut tembak
+            # Semakin bola maju ke area lawan, kiper ikut naik maju maksimal +0.65 meter dari area penalti
+            ball_progress = (ball.x - self.field.own_goal_x()) / self.config.field_length
+            x_advance = clamp(ball_progress * 1.2, 0.0, 0.65)
+            keeper_x = base_keeper_x + x_advance
+            
+            # Pelacakan lateral (Y) yang lebih responsif mengikuti pergerakan bola
+            keeper_y = clamp(ball.y * 0.45, -1.4, 1.4)
+        else:
+            keeper_x = base_keeper_x + 0.3
+            keeper_y = 0.0
+            
         return Pose2D(
             keeper_x,
             keeper_y,
@@ -119,7 +132,9 @@ class ReadyStance:
                 )
             )
         if slot == ReadySlot.SIDE:
-            y_offset = -1.1 if ball.y > 0.0 else 1.1
+            safe_radius = self.config.center_circle_radius + 0.3
+            offset = max(1.3, safe_radius * 0.75)
+            y_offset = -offset if ball.y > 0.0 else offset
             return self.field.clamp_inside_field(
                 Pose2D(
                     x=ball.x - 1.3,

@@ -163,10 +163,10 @@ class DefaultPlaybook(Playbook):
         for player_id in self.kit.config.player_ids:
             if player_id == goalkeeper_id:
                 mapping[player_id] = ROLE_GOALKEEPER
-            # elif player_id == chaser_id:
-            #     mapping[player_id] = ROLE_CHASER
-            else:
+            elif player_id == chaser_id:
                 mapping[player_id] = ROLE_CHASER
+            else:
+                mapping[player_id] = ROLE_SUPPORTER
 
         return RoleAssignment(mapping)
 

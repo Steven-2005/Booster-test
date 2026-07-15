@@ -190,7 +190,7 @@ class GoalkeeperRole(RoleStrategy):
     name = "goalkeeper"
 
     # Approach alignment distance for goalkeeper challenges, tighter than the chaser, in meters.
-    _APPROACH_OFFSET = 0.30
+    _APPROACH_OFFSET = 0.18
 
     def target(
         self,
@@ -223,6 +223,15 @@ class GoalkeeperRole(RoleStrategy):
         context: PlayContext,
     ) -> Pose2D:
         ball = context.known_ball
+        if ball.x < kit.field.own_goal_x() + 0.5:
+            # Tentukan arah buangan miring ke sisi lapangan (kiri atau kanan tergantung posisi bola)
+            clear_y = kit.config.field_width / 2.0 if ball.y > 0 else -kit.config.field_width / 2.0
+            # Targetkan tendangan menyilang ke depan-samping agar robot mendekat dari arah samping
+            return Pose2D(
+                kit.field.own_goal_x() + 2.0, 
+                clear_y, 
+                kit.field.attack_theta()
+            )
         if kit.targeting.ball_near_sideline(ball):
             return kit.targeting.sideline_recovery_target(ball)
         return Pose2D(

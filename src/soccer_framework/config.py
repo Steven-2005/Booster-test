@@ -91,13 +91,13 @@ class SoccerStrategyTuning:
     # not pure distance: far blockers trigger, nearby non-blockers do not.
     # Goal dimensions are rule-fixed in navigation.goal_structure_obstacles, not tuned here.
     # Opponent radius exceeds teammate radius because opponents are contested and less predictable.
-    opponent_obstacle_radius: float = 0.55  #  Circular radius used to detour around opponents.
+    opponent_obstacle_radius: float = 0.35  #  Circular radius used to detour around opponents.
     teammate_obstacle_radius: float = (
-        0.48  #  Circular radius used to detour around teammates; smaller because teammates are predictable.
+        0.20  #  Circular radius used to detour around teammates; smaller because teammates are predictable.
     )
-    obstacle_safety_margin: float = 0.22  #  Extra safety margin outside obstacle radius, shared by all obstacle types.
+    obstacle_safety_margin: float = 0.15  #  Extra safety margin outside obstacle radius, shared by all obstacle types.
     obstacle_start_ignore_distance: float = 0.35  #  Ignore obstacles this close to the start to avoid close-contact jitter.
-    obstacle_target_ignore_distance: float = 0.35  #  Ignore obstacles this close to the target to avoid arrival blocking.
+    obstacle_target_ignore_distance: float = 0.50  #  Ignore obstacles this close to the target to avoid arrival blocking.
 
     # Yaw avoidance bias
     # Second avoidance layer for close neighbors: keep the target, inspect nearby robots whose
@@ -120,9 +120,9 @@ class SoccerStrategyTuning:
 
     # Passing
     pass_enabled: bool = True  #  Master pass switch.
-    pass_min_score: float = 0.52  #  Minimum pass-candidate score; below this, dribble instead.
+    pass_min_score: float = 0.45  #  Minimum pass-candidate score; below this, dribble instead.
     pass_min_forward_m: float = 0.35  #  Minimum forward progress for passes; discourages lateral/back passes.
-    pass_lane_clearance: float = 0.75  #  Required clearance around the pass lane to avoid interception.
+    pass_lane_clearance: float = 0.40  #  Required clearance around the pass lane to avoid interception.
 
     # Dribbling
     dribble_advance_m: float = 1.15  #  Forward distance advanced by one dribble target.
@@ -130,11 +130,11 @@ class SoccerStrategyTuning:
 
     # Support positioning
     support_depth_m: float = 1.05  #  Supporter depth behind the ball carrier.
-    support_lateral_m: float = 1.25  #  Lateral spacing for supporters.
-    support_min_spacing_m: float = 1.15  #  Minimum teammate spacing to avoid clustering.
+    support_lateral_m: float = 0.8  #  Lateral spacing for supporters.
+    support_min_spacing_m: float = 0.5  #  Minimum teammate spacing to avoid clustering.
 
     # Goalkeeping and challenges
-    goalkeeper_challenge_margin_m: float = 0.70  #  Margin that triggers goalkeeper challenge.
+    goalkeeper_challenge_margin_m: float = 1.0  #  Margin that triggers goalkeeper challenge.
 
     # Sideline and goal-line recovery
     sideline_recovery_margin_m: float = 0.90  #  Sideline distance threshold for recovery.
