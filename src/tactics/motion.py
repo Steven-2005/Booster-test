@@ -140,12 +140,25 @@ class MotionController:
         return RobotCommand(
             intent=KickIntent(
                 direction=normalize_angle(kick_theta - robot.pose.theta),
-                power=self._config.strategy.soccer_kick_power,
+                power=self._kick_power_for_distance(ball),
                 ball_x=rel_ball.x,
                 ball_y=rel_ball.y,
             ),
             reason=reason,
         )
+
+    def _kick_power_for_distance(self, ball: BallState) -> float:
+        """Ramp power from soccer_kick_power up to soccer_kick_power_max as the
+        ball's distance to the opponent goal grows toward soccer_kick_long_shot_distance_m."""
+        strategy = self._config.strategy
+        goal_x = self._field.opponent_goal_x()
+        distance = math.hypot(goal_x - ball.x, 0.0 - ball.y)
+        far = max(strategy.soccer_kick_long_shot_distance_m, 1e-6)
+        ratio = clamp(distance / far, 0.0, 1.0)
+        power = strategy.soccer_kick_power + ratio * (
+            strategy.soccer_kick_power_max - strategy.soccer_kick_power
+        )
+        return clamp(power, strategy.soccer_kick_power, strategy.soccer_kick_power_max)
 
     def approach_target(
         self,
@@ -156,8 +169,8 @@ class MotionController:
         """Approach target behind the ball: step back by ``approach_offset`` opposite the kick direction, then clamp inside the field."""
         return self._field.clamp_inside_field(
             Pose2D(
-                x=ball.x - approach_offset,
-                y=ball.y,
+                x=ball.x - approach_offset * math.cos(kick_theta),
+                y=ball.x - approach_offset * math.cos(kick_theta),
                 theta=kick_theta,
             )
         )

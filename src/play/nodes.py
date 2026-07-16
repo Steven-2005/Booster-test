@@ -21,6 +21,7 @@ import py_trees
 from ..soccer_framework import PlayContext, Pose2D, RobotCommand
 from ..behavior_tree.blackboard import BlackboardKeys, BlackboardClient, cmd_key
 from ..behavior_tree.nodes.conditions import IsInKickRange
+from ..tactics.geometry import normalize_angle
 from .playbook import Playbook, RoleAssignment
 
 if TYPE_CHECKING:
@@ -253,6 +254,49 @@ class KickAction(py_trees.behaviour.Behaviour):
         self.blackboard.write(cmd_key(player_id), command)
         return py_trees.common.Status.SUCCESS
 
+class IsAlignedForKick(py_trees.behaviour.Behaviour):
+    """Gate that only allows a kick once heading is close enough to ``kick_theta``.
+ 
+    ``IsInKickRange`` only checks distance to the ball, so without this leaf a
+    robot can be pushed into ``KickAction`` while still turning to face the
+    target (e.g. mid-approach, or nudged off-heading by yaw avoidance), sending
+    the kick off to the side instead of at the intended target. FAILURE here
+    falls back to ``MoveToTarget``, which keeps re-approaching until heading
+    is within tolerance.
+    """
+ 
+    def __init__(
+        self,
+        kit: "SoccerKit",
+        player_id: int,
+        kick_target_fn: TargetFn,
+    ):
+        super().__init__(f"IsAlignedForKick({player_id})")
+        self._kit = kit
+        self._player_id = player_id
+        self._kick_target_fn = kick_target_fn
+        self.blackboard = BlackboardClient(name=self.name)
+ 
+    def update(self) -> py_trees.common.Status:
+        context = _read_play_context(self.blackboard)
+        if context is None:
+            return py_trees.common.Status.FAILURE
+        robot = context.teammates.get(self._player_id)
+        if robot is None or robot.pose is None:
+            return py_trees.common.Status.FAILURE
+        try:
+            kt = self._kick_target_fn(context)
+        except ValueError:
+            return py_trees.common.Status.FAILURE
+        ball = context.known_ball
+        kick_theta = math.atan2(kt.y - ball.y, kt.x - ball.x)
+        heading_error = abs(normalize_angle(kick_theta - robot.pose.theta))
+        tolerance = self._kit.config.strategy.soccer_kick_align_tolerance_rad
+        return (
+            py_trees.common.Status.SUCCESS
+            if heading_error <= tolerance
+            else py_trees.common.Status.FAILURE
+        )
 
 class IsKickWanted(py_trees.behaviour.Behaviour):
     """Condition leaf that calls ``wants_kick_fn`` to decide whether this tick wants a kick."""

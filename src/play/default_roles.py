@@ -22,6 +22,99 @@ if TYPE_CHECKING:
 
 
 # ----------------------------------------------------------------------
+# Marker: Terus mendekati posisi robot lawan
+# ----------------------------------------------------------------------
+
+class MarkerRole(RoleStrategy):
+    """Peran untuk terus mendekati (pressing) robot lawan terdekat."""
+
+    name = "marker"
+
+    def target(
+        self,
+        kit: "SoccerKit",
+        player_id: int,
+        context: PlayContext,
+    ) -> Pose2D:
+        # Jika ada data lawan, dekati lawan pertama/terdekat
+        if context.opponents:
+            opponent_id, opponent = list(context.opponents.items())[0]
+            if opponent.pose:
+                # Targetkan posisi robot lawan
+                return Pose2D(opponent.pose.x, opponent.pose.y, 0.0)
+        # Jika tidak ada lawan yang terlihat, kembali ke tengah
+        return Pose2D(0.0, 0.0, 0.0)
+
+    def build_subtree(
+        self,
+        kit: "SoccerKit",
+        player_id: int,
+    ) -> py_trees.behaviour.Behaviour:
+        return MoveToTarget(
+            kit,
+            player_id,
+            lambda context: self.target(kit, player_id, context),
+            reason_fn=lambda: "marking opponent",
+            hold_vyaw=0.12,
+        )
+
+
+
+# ----------------------------------------------------------------------
+# Midfield Shooter: Mendekati bola dan menendang ke gawang dari tengah
+# ----------------------------------------------------------------------
+
+class MidfieldShooterRole(RoleStrategy):
+    """Menendang bola langsung ke arah gawang."""
+
+    name = "midfield_shooter"
+    _APPROACH_OFFSET = 0.12
+
+    def target(
+        self,
+        kit: "SoccerKit",
+        player_id: int,
+        context: PlayContext,
+    ) -> Pose2D:
+        ball = context.known_ball
+        kt = self.kick_target(kit, player_id, context)
+        kick_theta = math.atan2(kt.y - ball.y, kt.x - ball.x)
+        return kit.motion.approach_target(
+            ball,
+            kick_theta,
+            self._APPROACH_OFFSET,
+        )
+
+    def kick_target(
+        self,
+        kit: "SoccerKit",
+        player_id: int,
+        context: PlayContext,
+    ) -> Pose2D:
+        # Selalu menargetkan tengah gawang lawan
+        return Pose2D(
+            kit.field.opponent_goal_x(),
+            0.0,
+            kit.field.attack_theta(),
+        )
+
+    def build_subtree(
+        self,
+        kit: "SoccerKit",
+        player_id: int,
+    ) -> py_trees.behaviour.Behaviour:
+        return build_attack_subtree(
+            kit,
+            player_id,
+            AttackSubtreeConfig(
+                target_fn=lambda context: self.target(kit, player_id, context),
+                kick_target_fn=lambda context: self.kick_target(kit, player_id, context),
+                reason_fn=lambda: "approach for midfield shot",
+                kick_reason_fn=lambda target: "midfield shot to goal",
+            ),
+        )
+
+# ----------------------------------------------------------------------
 # Chaser: approach and kick the ball
 # ----------------------------------------------------------------------
 
