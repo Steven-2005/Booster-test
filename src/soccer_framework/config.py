@@ -72,8 +72,8 @@ class SoccerStrategyTuning:
 
     # Kick hysteresis
     # Use enter/exit thresholds plus delay to prevent flapping around distance boundaries.
-    soccer_kick_enter_distance: float = 2.5  #  Enter kick mode when distance to ball is below enter.
-    soccer_kick_exit_distance: float = 5.0  #  Exit kick mode when distance to ball is above exit; must exceed enter.
+    soccer_kick_enter_distance: float = 1.5  #  Enter kick mode when distance to ball is below enter.
+    soccer_kick_exit_distance: float = 3.0  #  Exit kick mode when distance to ball is above exit; must exceed enter.
     soccer_kick_power: float = 4.0  #  Kick power.
     soccer_kick_power_max: float = 10.0 
     soccer_kick_align_tolerance_rad: float = 0.25

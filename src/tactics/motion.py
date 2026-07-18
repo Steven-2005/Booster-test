@@ -170,7 +170,7 @@ class MotionController:
         return self._field.clamp_inside_field(
             Pose2D(
                 x=ball.x - approach_offset * math.cos(kick_theta),
-                y=ball.x - approach_offset * math.cos(kick_theta),
+                y=ball.y - approach_offset * math.cos(kick_theta),
                 theta=kick_theta,
             )
         )

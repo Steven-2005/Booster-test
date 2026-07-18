@@ -148,18 +148,7 @@ class ChaserRole(RoleStrategy):
         player_id: int,
         context: PlayContext,
     ) -> Pose2D:
-        slot = kit.config.ready_slot_for_player(player_id)
-        # if slot == ReadySlot.SIDE:
-        #     return kit.targeting.select_clear_or_pass_target(
-        #         player_id,
-        #         context,
-        #         kit.is_player_allowed,
-        #     )
-        return kit.targeting.select_kick_target(
-            player_id,
-            context,
-            kit.is_player_allowed,
-        )
+        return Pose2D(kit.field.opponent_goal_x(), 0.0, 0.0)
 
     def _approach_reason(self, kit: "SoccerKit", player_id: int) -> str:
         slot = kit.config.ready_slot_for_player(player_id)
