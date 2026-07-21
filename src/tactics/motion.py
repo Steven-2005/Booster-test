@@ -140,12 +140,24 @@ class MotionController:
         return RobotCommand(
             intent=KickIntent(
                 direction=normalize_angle(kick_theta - robot.pose.theta),
-                power=self._kick_power_for_distance(ball),
+                power=self._kick_power(context, ball),
                 ball_x=rel_ball.x,
                 ball_y=rel_ball.y,
             ),
             reason=reason,
         )
+
+    def _kick_power(self, context: PlayContext, ball: BallState) -> float:
+        """Use a fixed soft power on the opening kickoff touch; otherwise ramp by distance.
+
+        Kickoff is ``set_play == NONE`` with our team as ``kicking_team`` (see
+        ``GameControlState.is_kickoff_for_team``). ``context.game`` can be ``None``
+        early on, so this falls back to the normal distance-ramped power in that case.
+        """
+        game = context.game
+        if game is not None and game.is_kickoff_for_team(self._config.team_id):
+            return self._config.strategy.soccer_kickoff_kick_power
+        return self._kick_power_for_distance(ball)
 
     def _kick_power_for_distance(self, ball: BallState) -> float:
         """Ramp power from soccer_kick_power up to soccer_kick_power_max as the
@@ -170,7 +182,7 @@ class MotionController:
         return self._field.clamp_inside_field(
             Pose2D(
                 x=ball.x - approach_offset * math.cos(kick_theta),
-                y=ball.y - approach_offset * math.cos(kick_theta),
+                y=ball.y - approach_offset * math.sin(kick_theta),
                 theta=kick_theta,
             )
         )
